@@ -33,7 +33,7 @@ def shape(df, alt="two-sided"):
 
 def analyze_group_differences(df, group_column, num_cols):
     # Group the data by the specified column (e.g., gender, age_bucket, etc.)
-    grouped = df.groupby(group_column)
+    grouped = df.groupby(group_column, observed=True)
     
     # Find the minimum group size to ensure equal sampling across groups
     sample_size = min(len(group) for _, group in grouped)
@@ -46,22 +46,25 @@ def analyze_group_differences(df, group_column, num_cols):
     
     # Run Levene's and Kruskal-Wallis tests for each numerical column
     for col in num_cols:
-        # Extract the values for each group
-        col_values = [group[col].values for group in sampled_groups]
-        
-        # Perform Levene's test
-        levene_statistic, levene_pvalue = stats.levene(*col_values, center='median')
-        
-        # Perform Kruskal-Wallis test
-        kruskal_statistic, kruskal_pvalue = stats.kruskal(*col_values)
-        
-        # Append the results
-        results.append({
-            'column': col,
-            'levene_statistic': levene_statistic,
-            'levene_pvalue': levene_pvalue,
-            'kruskal_statistic': kruskal_statistic,
-            'kruskal_pvalue': kruskal_pvalue
-        })
+
+        if col != group_column:
+            # Extract the values for each group
+            col_values = [group[col].values for group in sampled_groups]
+            
+            # Perform Levene's test
+            levene_statistic, levene_pvalue = stats.levene(*col_values, center='median')
+            
+            # Perform Kruskal-Wallis test
+            kruskal_statistic, kruskal_pvalue = stats.kruskal(*col_values)
+            
+            # Append the results
+            results.append({
+                'group_column': group_column,
+                'column': col,
+                'levene_statistic': levene_statistic,
+                'levene_pvalue': levene_pvalue,
+                'kruskal_statistic': kruskal_statistic,
+                'kruskal_pvalue': kruskal_pvalue
+            })
     
     return results
