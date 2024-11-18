@@ -17,6 +17,7 @@ df = load_data("../data/clean/clustered.csv") # for local development
 #df = load_data("/data/clean/clustered.csv")
 
 # Create population averages for comparison metrics.
+pop_total = len(df)
 pop_mean_age = df['age'].mean().astype('int')
 pop_mean_income = df['income'].mean().astype('int')
 pop_mean_spending_score = df['spending_score'].mean().astype('int')
@@ -43,28 +44,50 @@ mean_spending_score = df['spending_score'].mean().astype('int')
 mean_purchase_freq = df['purchase_frequency'].mean().astype('int')
 mean_membership = df['membership_years'].mean().astype('int')
 
-row1col1, row1col2 = st.columns(2)
+# Create a list of metrics
+metrics = [
+	('Total Customers', total, pop_total),
+	('Mean Age', mean_age, pop_mean_age),
+	('Mean Income', mean_income, pop_mean_income),
+	('Mean Spending Score', mean_spending_score, pop_mean_spending_score),
+	('Mean Purchase Frequency', mean_purchase_freq, pop_mean_purchase_freq),
+	('Mean Membership Tenure', mean_membership, pop_mean_membership)
+]
 
-with row1col1:
-	m1, m2, m3 = st.columns(3)
-	m4, m5, m6 = st.columns(3)
-	with m1:
-		with st.container(border=True):
-			st.metric(':red[**Total Count**]', total)
-	with m2:
-		st.metric('Mean Age', mean_age, '11% vs. pop.')
-	with m3:
-		st.metric('Mean Income', mean_income)
-	with m4:
-		st.metric('Mean Spending Score', mean_spending_score)
-	with m5:
-		st.metric('Mean Purchase Frequency', mean_purchase_freq)
-	with m6:
-		st.metric('Mean Membership Duration', mean_membership)
+# Calculate difference from population
+def relative_percentage_difference(a, b):
+    """Calculate the percentage difference relative to the first value."""
+    if a == 0:  # Avoid division by zero
+        raise ValueError("The first value cannot be zero.")
+    return int((a - b) / (a) * 100)
+
+r1_cols = st.columns(6)
+
+for col, (metric, val, pop_val) in zip(r1_cols, metrics):
+	if cluster != 'All clusters':
+		with col:
+			with st.container(border=True):
+				if metric == 'Total Customers':
+					diff = f"{int(val / pop_val * 100)}% of all customers"
+					st.metric(metric, val, diff, delta_color='off')
+				else:
+					diff = f"{relative_percentage_difference(val, pop_val)}% vs. global mean"
+					st.metric(metric, val, diff)
+	else:
+		with col:
+			with st.container(border=True):
+				st.metric(metric, val)
+
+
+row1col1, row1col2 = st.columns(2)
 
 with row1col2:
 	with st.container(border=True):
 		sunburst = plot_sunburst(df, 'cluster', dimension)
 		st.plotly_chart(sunburst)
 
-st.text('jhasldkhfgalkshdgflkasjdhflkj')
+with row1col1:
+	with st.container(border=True):
+		bubble = plot_bubble(df, dimension, 'spending_score')
+		st.plotly_chart(bubble)
+
