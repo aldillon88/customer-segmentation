@@ -25,17 +25,17 @@ pop_mean_purchase_freq = df['purchase_frequency'].mean().astype('int')
 pop_mean_membership = df['membership_years'].mean().astype('int')
 
 clusters = df['cluster'].unique().tolist()
-clusters.insert(0, 'All clusters')
-dimensions = df.select_dtypes('object').columns.to_list()
+clusters.insert(0, 'All Segments')
+dimensions = df.select_dtypes('object').columns.sort_values().to_list()
 dimensions.pop(dimensions.index('spending_score_category'))
 dimensions = [dim.replace('_', ' ').title() for dim in dimensions]
 
 with st.sidebar:
 	st.subheader('Filters', divider=True)
-	cluster = st.selectbox('Cluster', clusters)
+	cluster = st.selectbox('Customer Segment', clusters)
 	dimension = st.selectbox('Dimension', dimensions).replace(' ', '_').lower()
 
-if cluster != 'All clusters':
+if cluster != 'All Segments':
 	df = df[df['cluster'] == cluster]
 
 # Calculate metrics
@@ -61,7 +61,7 @@ metrics = [
 r1_cols = st.columns(6)
 
 for col, (metric, val, pop_val) in zip(r1_cols, metrics):
-	if cluster != 'All clusters':
+	if cluster != 'All Segments':
 		with col:
 			with st.container(border=True):
 				if metric == 'Total Customers':
@@ -76,19 +76,41 @@ for col, (metric, val, pop_val) in zip(r1_cols, metrics):
 				st.metric(metric, val)
 
 
-row1col1, row1col2 = st.columns(2)
+#row1col1, row1col2, row1col3 = st.columns(3)
 
-with row1col1:
+#with row1col1:
+#	with st.container(border=True):
+#		bar = plot_bar(df, dimension)
+#		st.plotly_chart(bar)
+
+#with row1col2:
+#	with st.container(border=True):
+#		bubble = plot_bubble(df, dimension, 'spending_score')
+#		st.plotly_chart(bubble)
+
+#with row1col3:
+#	with st.container(border=True):
+#		sunburst = test(df, dimension, 'last_purchase_amount')
+#		st.plotly_chart(sunburst)
+
+c1, c2, c3, c4 = st.columns(4)
+
+with c1:
 	with st.container(border=True):
-		bubble = plot_bubble(df, dimension, 'spending_score')
-		st.plotly_chart(bubble)
+		bar1 = plot_bar(df, dimension)
+		st.plotly_chart(bar1)
 
-with row1col2:
+with c2:
 	with st.container(border=True):
-		sunburst = plot_sunburst(df, 'cluster', dimension)
-		st.plotly_chart(sunburst)
+		bubble1 = test(df, dimension, 'spending_score')
+		st.plotly_chart(bubble1)
 
-dims = [dim.replace('_', ' ').title() for dim in dimensions]
-st.text(dims)
-dims_lower = [dim.replace(' ', '_').lower() for dim in dims]
-st.text(dims_lower)
+with c3:
+	with st.container(border=True):
+		bubble2 = test(df, dimension, 'purchase_frequency')
+		st.plotly_chart(bubble2)
+
+with c4:
+	with st.container(border=True):
+		bubble3 = test(df, dimension, 'last_purchase_amount')
+		st.plotly_chart(bubble3)
