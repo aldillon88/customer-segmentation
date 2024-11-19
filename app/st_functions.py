@@ -24,35 +24,82 @@ def plot_sunburst(df, dim1, dim2):
 
 
 def plot_bubble(df, dimension, metric):
+
+	dim_title = dimension.replace('_', ' ').title()
+
 	grouped = df.groupby(['cluster', dimension], observed=True)[[metric, 'id']].agg({metric: 'mean', 'id': 'count'}).round(0).reset_index()
 	size = grouped['id'].tolist()
-	
-	fig = go.Figure(data=[go.Scatter(
-		x=grouped[dimension].tolist(),
-		y=grouped[metric].tolist(),
-		mode='markers',
-		marker=dict(
-			size=size,
-			sizemode='area',
-			sizeref=2.*max(size)/(60.**2),
-			sizemin=4,
-			color=grouped['cluster']#.unique()
+
+	metric_mean = grouped[metric].mean()
+
+	fig = go.Figure(data=[go.Scatter()])
+
+	for cluster, cluster_data in grouped.groupby('cluster'):
+		fig.add_trace(go.Scatter(
+			x=cluster_data[dimension].tolist(),
+			y=cluster_data[metric].tolist(),
+			mode='markers',
+			marker=dict(
+				size=size,
+				sizemode='area',
+				sizeref=2.*max(size)/(60.**2),
+				sizemin=4,
+				#color=grouped[cluster]#.unique()
+			),
+			name=f"Cluster {cluster}"
+			)
 		)
-	)])
+
+	fig.update_layout(
+		title=dict(
+			text=f"Spending Score and {dim_title}",
+			x=0,
+			y=1,
+			xanchor='left',
+			yanchor='top'
+		),
+		showlegend=True,
+		legend=dict(
+			orientation='h',
+			x=0,
+			y=-.2
+		)
+	)
+
+	fig.add_annotation(
+		xref='paper',
+		yref='paper',
+		xanchor='left',
+		yanchor='top',
+		x=-0.03,
+		y=1.2,
+		text="* The bubble size indicates the size of each group.",
+		showarrow=False,
+		align='left'
+	)
+
+	fig.update_yaxes(
+		range=[30, 70]
+	)
+
+	fig.add_hline(
+		y=metric_mean,
+		line_dash='dot',
+		line_color='white',
+		label=dict(
+			text='Mean',
+			textposition='start',
+			font=dict(
+				color='white'
+			)
+		)
+	)
+
 	return fig
 
-def test():
-	size = [20, 40, 60, 80, 100, 80, 60, 40, 20, 40]
-	fig = go.Figure(data=[go.Scatter(
-		x=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-		y=[11, 12, 10, 11, 12, 11, 12, 13, 12, 11],
-		mode='markers',
-		marker=dict(
-			size=size,
-			sizemode='area',
-			sizeref=2.*max(size)/(40.**2),
-			sizemin=4
-		)
-	)])
 
-	return fig
+def relative_percentage_difference(a, b):
+    """Calculate the percentage difference relative to the first value."""
+    if a == 0:  # Avoid division by zero
+        raise ValueError("The first value cannot be zero.")
+    return int((a - b) / (a) * 100)

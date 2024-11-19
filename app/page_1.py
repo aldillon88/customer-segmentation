@@ -27,11 +27,13 @@ pop_mean_membership = df['membership_years'].mean().astype('int')
 clusters = df['cluster'].unique().tolist()
 clusters.insert(0, 'All clusters')
 dimensions = df.select_dtypes('object').columns.to_list()
+dimensions.pop(dimensions.index('spending_score_category'))
+dimensions = [dim.replace('_', ' ').title() for dim in dimensions]
 
 with st.sidebar:
 	st.subheader('Filters', divider=True)
 	cluster = st.selectbox('Cluster', clusters)
-	dimension = st.selectbox('Dimension', dimensions)
+	dimension = st.selectbox('Dimension', dimensions).replace(' ', '_').lower()
 
 if cluster != 'All clusters':
 	df = df[df['cluster'] == cluster]
@@ -55,11 +57,6 @@ metrics = [
 ]
 
 # Calculate difference from population
-def relative_percentage_difference(a, b):
-    """Calculate the percentage difference relative to the first value."""
-    if a == 0:  # Avoid division by zero
-        raise ValueError("The first value cannot be zero.")
-    return int((a - b) / (a) * 100)
 
 r1_cols = st.columns(6)
 
@@ -81,13 +78,17 @@ for col, (metric, val, pop_val) in zip(r1_cols, metrics):
 
 row1col1, row1col2 = st.columns(2)
 
-with row1col2:
-	with st.container(border=True):
-		sunburst = plot_sunburst(df, 'cluster', dimension)
-		st.plotly_chart(sunburst)
-
 with row1col1:
 	with st.container(border=True):
 		bubble = plot_bubble(df, dimension, 'spending_score')
 		st.plotly_chart(bubble)
 
+with row1col2:
+	with st.container(border=True):
+		sunburst = plot_sunburst(df, 'cluster', dimension)
+		st.plotly_chart(sunburst)
+
+dims = [dim.replace('_', ' ').title() for dim in dimensions]
+st.text(dims)
+dims_lower = [dim.replace(' ', '_').lower() for dim in dims]
+st.text(dims_lower)
