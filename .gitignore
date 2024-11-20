@@ -1,2 +1,6 @@
 cust-seg-venv/
 .DS_Store
+.dockerignore
+compose.yaml
+Dockerfile
+README.Docker.md
